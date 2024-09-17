@@ -1,25 +1,23 @@
 import React from 'react';
-import { useWalletMultiChain } from './Hooks/useWalletMultiChain';
+import { useWalletMultiChain } from './hooks/useWalletMultiChain';
+
+const supportedChains = [1, 3, 4, 5, 42, 11155111, 42161]; // Mainnet, Ropsten, Rinkeby, Goerli, Kovan, Sepolia, Arbitrum
+
 function App() {
   const {
     provider,
     network,
-    networkName,
     walletAddress,
     isConnecting,
     error,
     connectWallet,
     disconnectWallet,
-    switchNetwork,
-    isConnected
-  } = useWalletMultiChain({
-    supportedChains: [1, 3, 4, 11155111, 42],
-    autoConnect: true
-  });
+    switchNetwork
+  } = useWalletMultiChain(supportedChains);
 
   const handleSwitchNetwork = async () => {
     try {
-      await switchNetwork(11155111);
+      await switchNetwork(4); // Switch to Rinkeby (chainId 4)
     } catch (error) {
       console.error('Failed to switch network:', error);
     }
@@ -28,16 +26,15 @@ function App() {
   return (
     <div className="App">
       <h1>Wallet MultiChain Demo</h1>
-      {!isConnected ? (
+      {!walletAddress ? (
         <button onClick={connectWallet} disabled={isConnecting}>
           {isConnecting ? 'Connecting...' : 'Connect Wallet'}
         </button>
       ) : (
         <div>
           <p>Connected Address: {walletAddress}</p>
-          <p>Network: {networkName}</p>
+          <p>Network: {network ? `Chain ID ${network}` : 'Unknown'}</p>
           <button onClick={disconnectWallet}>Disconnect Wallet</button>
-          <div></div>
           <button onClick={handleSwitchNetwork}>Switch to Rinkeby</button>
         </div>
       )}
