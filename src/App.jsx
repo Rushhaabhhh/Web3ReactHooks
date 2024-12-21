@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { useWalletMultiChain } from './Hooks/useWalletMultiChain';
 import { useTransactionStatus } from './Hooks/useTransactionStatus';
 import { useGasEstimator } from './Hooks/useGasEstimator';
+import { useWalletMultiChain } from './Hooks/useWalletMultiChain';
 
 const supportedChains = [1, 11155111, 3, 4, 42, 56, 137, 250, 42161, 43114];
 
@@ -117,8 +117,6 @@ function GasEstimatorPanel({ provider, transaction }) {
 function TransactionMonitor({ txHash }) {
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const transactionInfo = useTransactionStatus(provider, txHash, {
-    initialPollingInterval: 5000,
-    requiredConfirmations: 3,
     onStatusChange: (newStatus, oldStatus) =>
       console.log(`Status changed from ${oldStatus} to ${newStatus}`),
     onConfirmation: (info) => console.log('Transaction confirmed:', info),
@@ -146,12 +144,29 @@ function App() {
   const [selectedChain, setSelectedChain] = useState(network);
   const [transactionHash, setTransactionHash] = useState('');
   const [pendingTransaction, setPendingTransaction] = useState(null);
+  const [balance, setBalance] = useState('0');
 
   useEffect(() => {
     if (window.ethereum) {
       setAvailableChains(supportedChains);
     }
   }, []);
+
+  useEffect(() => {
+    if (walletAddress && provider) {
+      // Fetch the balance when the wallet address is set
+      const getBalance = async () => {
+        try {
+          const balance = await provider.getBalance(walletAddress);
+          setBalance(ethers.utils.formatEther(balance));
+        } catch (error) {
+          console.error('Error fetching balance:', error);
+        }
+      };
+
+      getBalance();
+    }
+  }, [walletAddress, provider]);
 
   const handleSwitchNetwork = async (chainId) => {
     try {
@@ -205,6 +220,7 @@ function App() {
             <p className="text-gray-700">
               <span className="font-semibold">Connected Address:</span> {walletAddress}
             </p>
+            <p>Balance : {balance} ETH</p>
 
             <p className="text-gray-700">
               <span className="font-semibold">Network:</span> {networkNames[network] || `Chain ID ${network}`}
