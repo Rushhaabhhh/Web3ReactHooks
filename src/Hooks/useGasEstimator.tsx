@@ -176,61 +176,61 @@ export const useGasEstimator = ({
 
 
 
-import React from 'react';
-import { ethers } from 'ethers';
-import { useGasEstimator } from './Hooks/useGasEstimator';
+// import React from 'react';
+// import { ethers } from 'ethers';
+// import { useGasEstimator } from './Hooks/useGasEstimator';
 
 
-const App = () => {
-  // Connect to a local Ethereum node (Ganache)
-  const provider = new ethers.providers.JsonRpcProvider('https://sepolia.infura.io/v3/96a5eaee541f4b9ba92d115040b83a53');
+// const App = () => {
+//   // Connect to a local Ethereum node (Ganache)
+//   const provider = new ethers.providers.JsonRpcProvider('https://sepolia.infura.io/v3/96a5eaee541f4b9ba92d115040b83a53');
 
-  const {
-    loading,
-    error,
-    estimation,
-    estimateGas,
-    blockHistory,
-  } = useGasEstimator({
-    provider,
-    refreshInterval: 15000, // Refresh every 15 seconds
-    historicalBlocks: 10, // Use fewer blocks for faster results in local testing
-    priorityFeeBump: 5, // Smaller bump for testing
-    onError: (err) => console.error('Gas estimation error:', err),
-    onSuccess: (estimation) => console.log('Gas estimation success:', estimation),
-  });
+//   const {
+//     loading,
+//     error,
+//     estimation,
+//     estimateGas,
+//     blockHistory,
+//   } = useGasEstimator({
+//     provider,
+//     refreshInterval: 15000, // Refresh every 15 seconds
+//     historicalBlocks: 10, // Use fewer blocks for faster results in local testing
+//     priorityFeeBump: 5, // Smaller bump for testing
+//     onError: (err) => console.error('Gas estimation error:', err),
+//     onSuccess: (estimation) => console.log('Gas estimation success:', estimation),
+//   });
 
-  return (
-    <div style={{ padding: '20px' }}>
-      <h1>Gas Estimator</h1>
-      {loading && <p>Loading gas estimation...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error.message}</p>}
-      {estimation && (
-        <div>
-          <h2>Gas Estimation</h2>
-          <p>Base Fee: {estimation.baseFee.toString()}</p>
-          <p>Max Fee Per Gas: {estimation.maxFeePerGas.toString()}</p>
-          <p>Max Priority Fee Per Gas: {estimation.maxPriorityFeePerGas.toString()}</p>
-          <p>Gas Limit: {estimation.gasLimit.toString()}</p>
-          <p>Estimated Cost: {estimation.estimatedCost.toString()}</p>
+//   return (
+//     <div style={{ padding: '20px' }}>
+//       <h1>Gas Estimator</h1>
+//       {loading && <p>Loading gas estimation...</p>}
+//       {error && <p style={{ color: 'red' }}>Error: {error.message}</p>}
+//       {estimation && (
+//         <div>
+//           <h2>Gas Estimation</h2>
+//           <p>Base Fee: {estimation.baseFee.toString()}</p>
+//           <p>Max Fee Per Gas: {estimation.maxFeePerGas.toString()}</p>
+//           <p>Max Priority Fee Per Gas: {estimation.maxPriorityFeePerGas.toString()}</p>
+//           <p>Gas Limit: {estimation.gasLimit.toString()}</p>
+//           <p>Estimated Cost: {estimation.estimatedCost.toString()}</p>
 
-          <h3>Confidence Levels</h3>
-          <p>Low: {estimation.confidence.low.toString()}</p>
-          <p>Medium: {estimation.confidence.medium.toString()}</p>
-          <p>High: {estimation.confidence.high.toString()}</p>
+//           <h3>Confidence Levels</h3>
+//           <p>Low: {estimation.confidence.low.toString()}</p>
+//           <p>Medium: {estimation.confidence.medium.toString()}</p>
+//           <p>High: {estimation.confidence.high.toString()}</p>
 
-          <h3>Gas Price Recommendations</h3>
-          <p>Slow: {estimation.gasPriceRecommendations.slow}</p>
-          <p>Standard: {estimation.gasPriceRecommendations.standard}</p>
-          <p>Fast: {estimation.gasPriceRecommendations.fast}</p>
+//           <h3>Gas Price Recommendations</h3>
+//           <p>Slow: {estimation.gasPriceRecommendations.slow}</p>
+//           <p>Standard: {estimation.gasPriceRecommendations.standard}</p>
+//           <p>Fast: {estimation.gasPriceRecommendations.fast}</p>
 
-          <h3>Network Congestion</h3>
-          <p>{estimation.networkCongestion}</p>
+//           <h3>Network Congestion</h3>
+//           <p>{estimation.networkCongestion}</p>
 
-        </div>
-      )}
-    </div>
-  );
-};
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
-export default App;
+// export default App;

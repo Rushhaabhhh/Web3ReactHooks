@@ -19,17 +19,13 @@ const networkNames = {
   11155111: 'Sepolia Testnet',
 };
 
-function GasEstimatorPanel({ provider }) {
+function GasEstimatorPanel({ provider, transaction }) {
   const { loading, error, estimation } = useGasEstimator({
     provider,
     refreshInterval: 12000,
     historicalBlocks: 20,
     onError: (err) => console.error('Gas estimation error:', err),
   });
-
-  if (!provider) {
-    return null;
-  }
 
   if (loading) {
     return (
@@ -62,48 +58,81 @@ function GasEstimatorPanel({ provider }) {
 
   return (
     <div className="mt-4 p-4 bg-gray-50 rounded-lg shadow-sm">
-      <h3 className="text-lg font-semibold mb-3">Current Gas Prices</h3>
+      <h3 className="text-lg font-semibold mb-3">Gas Estimation</h3>
       
       <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <div className="text-sm text-gray-600">Base Fee</div>
-            <div className="font-mono text-lg">{formatGwei(estimation.baseFee)}</div>
-          </div>
-          
-          <div className="p-3 bg-green-50 rounded-lg">
-            <div className="text-sm text-gray-600">Priority Fee</div>
-            <div className="font-mono text-lg">{formatGwei(estimation.maxPriorityFeePerGas)}</div>
+        <div className="flex justify-between">
+          <span className="text-gray-600">Base Fee:</span>
+          <span className="font-mono">{formatGwei(estimation.baseFee)}</span>
+        </div>
+        
+        <div className="flex justify-between">
+          <span className="text-gray-600">Max Fee:</span>
+          <span className="font-mono">{formatGwei(estimation.maxFeePerGas)}</span>
+        </div>
+        
+        <div className="flex justify-between">
+          <span className="text-gray-600">Priority Fee:</span>
+          <span className="font-mono">{formatGwei(estimation.maxPriorityFeePerGas)}</span>
+        </div>
+        
+        <div className="flex justify-between">
+          <span className="text-gray-600">Estimated Cost:</span>
+          <span className="font-mono">{formatEther(estimation.estimatedCost)}</span>
+        </div>
+
+        <div className="mt-4">
+          <h4 className="text-sm font-semibold mb-2">Estimated Confirmation Time</h4>
+          <div className="bg-gray-100 rounded p-2">
+            <div className="flex justify-between text-sm">
+              <span>Likely: {estimation.timeEstimates.likely}s</span>
+              <span>Fast: {estimation.timeEstimates.fast}s</span>
+              <span>Urgent: {estimation.timeEstimates.urgent}s</span>
+            </div>
           </div>
         </div>
 
         <div className="mt-4">
-          <h4 className="text-sm font-semibold mb-2">Expected Transaction Cost</h4>
-          <div className="p-3 bg-purple-50 rounded-lg">
-            <div className="font-mono text-xl text-center">
-              {formatEther(estimation.estimatedCost)}
+          <h4 className="text-sm font-semibold mb-2">Confidence Levels</h4>
+          <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className="bg-green-100 rounded p-2 text-center">
+              <div className="font-semibold">Low</div>
+              <div className="font-mono text-xs">{formatGwei(estimation.confidence.low)}</div>
             </div>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <h4 className="text-sm font-semibold mb-2">Estimated Wait Times</h4>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-green-100 p-2 rounded-lg text-center">
-              <div className="text-xs text-gray-600">Fast</div>
-              <div className="font-semibold">{estimation.timeEstimates.fast}s</div>
+            <div className="bg-yellow-100 rounded p-2 text-center">
+              <div className="font-semibold">Medium</div>
+              <div className="font-mono text-xs">{formatGwei(estimation.confidence.medium)}</div>
             </div>
-            <div className="bg-yellow-100 p-2 rounded-lg text-center">
-              <div className="text-xs text-gray-600">Average</div>
-              <div className="font-semibold">{estimation.timeEstimates.likely}s</div>
-            </div>
-            <div className="bg-red-100 p-2 rounded-lg text-center">
-              <div className="text-xs text-gray-600">Slow</div>
-              <div className="font-semibold">{estimation.timeEstimates.urgent}s</div>
+            <div className="bg-red-100 rounded p-2 text-center">
+              <div className="font-semibold">High</div>
+              <div className="font-mono text-xs">{formatGwei(estimation.confidence.high)}</div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function TransactionMonitor({ txHash }) {
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const transactionInfo = useTransactionStatus(provider, txHash, {
+    initialPollingInterval: 5000,
+    requiredConfirmations: 3,
+    onStatusChange: (newStatus, oldStatus) =>
+      console.log(`Status changed from ${oldStatus} to ${newStatus}`),
+    onConfirmation: (info) => console.log('Transaction confirmed:', info),
+    onError: (error) => console.error('Transaction error:', error),
+  });
+
+  return (
+    <div className="mt-6 p-4 bg-gray-100 rounded shadow">
+      <h2 className="text-xl font-bold mb-2">Transaction Status</h2>
+      <p><strong>Status:</strong> {transactionInfo.status}</p>
+      <p><strong>Confirmations:</strong> {transactionInfo.confirmations}</p>
+      <p><strong>Gas Used:</strong> {transactionInfo.gasUsed || 'N/A'}</p>
+      <p><strong>Effective Gas Price:</strong> {transactionInfo.effectiveGasPrice || 'N/A'}</p>
+      <p><strong>Mempool Position:</strong> {transactionInfo.mempoolPosition || 'N/A'}</p>
     </div>
   );
 }
@@ -116,9 +145,8 @@ function App() {
   const [availableChains, setAvailableChains] = useState([]);
   const [selectedChain, setSelectedChain] = useState(network);
   const [transactionHash, setTransactionHash] = useState('');
+  const [pendingTransaction, setPendingTransaction] = useState(null);
 
-  // Remove pendingTransaction state since we'll show gas estimates always
-  
   useEffect(() => {
     if (window.ethereum) {
       setAvailableChains(supportedChains);
@@ -141,16 +169,22 @@ function App() {
       return;
     }
 
+    const transaction = {
+      to: walletAddress,
+      value: ethers.utils.parseEther('0.001'),
+    };
+
+    setPendingTransaction(transaction);
+
     try {
       const signer = provider.getSigner();
-      const tx = await signer.sendTransaction({
-        to: walletAddress,
-        value: ethers.utils.parseEther('0.001'),
-      });
+      const tx = await signer.sendTransaction(transaction);
       setTransactionHash(tx.hash);
+      setPendingTransaction(null);
     } catch (error) {
       console.error('Transaction error:', error);
       alert('Transaction failed. Check the console for details.');
+      setPendingTransaction(null);
     }
   };
 
@@ -197,8 +231,12 @@ function App() {
               </select>
             </div>
 
-            {/* Show gas estimator as soon as wallet is connected */}
-            {provider && <GasEstimatorPanel provider={provider} />}
+            {provider && pendingTransaction && (
+              <GasEstimatorPanel 
+                provider={provider} 
+                transaction={pendingTransaction} 
+              />
+            )}
 
             <button
               onClick={handleSimulateTransaction}
@@ -209,6 +247,7 @@ function App() {
           </div>
         )}
 
+        {transactionHash && <TransactionMonitor txHash={transactionHash} />}
       </div>
     </div>
   );
