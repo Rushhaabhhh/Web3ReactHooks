@@ -1,270 +1,374 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect } from 'react';
+import { Link } from 'react-scroll'; 
 import { ethers } from 'ethers';
-import { useTransactionStatus } from './Hooks/useTransactionStatus';
-import { useGasEstimator } from './Hooks/useGasEstimator';
-import { useWalletMultiChain } from './Hooks/useWalletMultiChain';
+import Image from './assets/logo.png';
+import { Github, CopyCheck, Copy } from 'lucide-react'; 
+import { motion } from 'framer-motion';
 
-const supportedChains = [1, 11155111, 3, 4, 42, 56, 137, 250, 42161, 43114];
-
-const networkNames = {
-  1: 'Ethereum Mainnet',
-  3: 'Ropsten Testnet',
-  4: 'Rinkeby Testnet',
-  42: 'Kovan Testnet',
-  56: 'Binance Smart Chain',
-  137: 'Polygon Mainnet',
-  250: 'Fantom Opera',
-  42161: 'Arbitrum One',
-  43114: 'Avalanche C-Chain',
-  11155111: 'Sepolia Testnet',
-};
-
-function GasEstimatorPanel({ provider, transaction }) {
-  const { loading, error, estimation } = useGasEstimator({
-    provider,
-    refreshInterval: 12000,
-    historicalBlocks: 20,
-    onError: (err) => console.error('Gas estimation error:', err),
-  });
-
-  if (loading) {
-    return (
-      <div className="mt-4 p-4 bg-gray-50 rounded-lg animate-pulse">
-        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="mt-4 p-4 bg-red-50 rounded-lg text-red-600">
-        Failed to estimate gas: {error.message}
-      </div>
-    );
-  }
-
-  if (!estimation) return null;
-
-  const formatGwei = (value) => {
-    if (!value) return 'N/A';
-    return `${ethers.utils.formatUnits(value, 'gwei')} Gwei`;
-  };
-
-  const formatEther = (value) => {
-    if (!value) return 'N/A';
-    return `${parseFloat(ethers.utils.formatEther(value)).toFixed(6)} ETH`;
-  };
-
-  return (
-    <div className="mt-4 p-4 bg-gray-50 rounded-lg shadow-sm">
-      <h3 className="text-lg font-semibold mb-3">Gas Estimation</h3>
-      
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <span className="text-gray-600">Base Fee:</span>
-          <span className="font-mono">{formatGwei(estimation.baseFee)}</span>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-gray-600">Max Fee:</span>
-          <span className="font-mono">{formatGwei(estimation.maxFeePerGas)}</span>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-gray-600">Priority Fee:</span>
-          <span className="font-mono">{formatGwei(estimation.maxPriorityFeePerGas)}</span>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-gray-600">Estimated Cost:</span>
-          <span className="font-mono">{formatEther(estimation.estimatedCost)}</span>
-        </div>
-
-        <div className="mt-4">
-          <h4 className="text-sm font-semibold mb-2">Estimated Confirmation Time</h4>
-          <div className="bg-gray-100 rounded p-2">
-            <div className="flex justify-between text-sm">
-              <span>Likely: {estimation.timeEstimates.likely}s</span>
-              <span>Fast: {estimation.timeEstimates.fast}s</span>
-              <span>Urgent: {estimation.timeEstimates.urgent}s</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <h4 className="text-sm font-semibold mb-2">Confidence Levels</h4>
-          <div className="grid grid-cols-3 gap-2 text-sm">
-            <div className="bg-green-100 rounded p-2 text-center">
-              <div className="font-semibold">Low</div>
-              <div className="font-mono text-xs">{formatGwei(estimation.confidence.low)}</div>
-            </div>
-            <div className="bg-yellow-100 rounded p-2 text-center">
-              <div className="font-semibold">Medium</div>
-              <div className="font-mono text-xs">{formatGwei(estimation.confidence.medium)}</div>
-            </div>
-            <div className="bg-red-100 rounded p-2 text-center">
-              <div className="font-semibold">High</div>
-              <div className="font-mono text-xs">{formatGwei(estimation.confidence.high)}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TransactionMonitor({ txHash }) {
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const transactionInfo = useTransactionStatus(provider, txHash, {
-    onStatusChange: (newStatus, oldStatus) =>
-      console.log(`Status changed from ${oldStatus} to ${newStatus}`),
-    onConfirmation: (info) => console.log('Transaction confirmed:', info),
-    onError: (error) => console.error('Transaction error:', error),
-  });
-
-  return (
-    <div className="mt-6 p-4 bg-gray-100 rounded shadow">
-      <h2 className="text-xl font-bold mb-2">Transaction Status</h2>
-      <p><strong>Status:</strong> {transactionInfo.status}</p>
-      <p><strong>Confirmations:</strong> {transactionInfo.confirmations}</p>
-      <p><strong>Gas Used:</strong> {transactionInfo.gasUsed || 'N/A'}</p>
-      <p><strong>Effective Gas Price:</strong> {transactionInfo.effectiveGasPrice || 'N/A'}</p>
-      <p><strong>Mempool Position:</strong> {transactionInfo.mempoolPosition || 'N/A'}</p>
-    </div>
-  );
-}
+import DemoComponent from './DemoComponent';
 
 function App() {
-  const { wallet, actions } = useWalletMultiChain(supportedChains);
-  const { provider, network, walletAddress } = wallet;
-  const { connectWallet, disconnectWallet, switchNetwork } = actions;
 
-  const [availableChains, setAvailableChains] = useState([]);
-  const [selectedChain, setSelectedChain] = useState(network);
-  const [transactionHash, setTransactionHash] = useState('');
-  const [pendingTransaction, setPendingTransaction] = useState(null);
-  const [balance, setBalance] = useState('0');
+  const [isCopied, setIsCopied] = useState(false);
+  const [typedText, setTypedText] = useState("");
+  const frameworks = ["React", "Vue.js", "Next.js", "Gatsby", "Svelte", "Angular"];
+  const [index, setIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
 
-  useEffect(() => {
-    if (window.ethereum) {
-      setAvailableChains(supportedChains);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (walletAddress && provider) {
-      // Fetch the balance when the wallet address is set
-      const getBalance = async () => {
-        try {
-          const balance = await provider.getBalance(walletAddress);
-          setBalance(ethers.utils.formatEther(balance));
-        } catch (error) {
-          console.error('Error fetching balance:', error);
-        }
-      };
-
-      getBalance();
-    }
-  }, [walletAddress, provider]);
-
-  const handleSwitchNetwork = async (chainId) => {
-    try {
-      await switchNetwork(chainId);
-      setSelectedChain(chainId);
-    } catch (error) {
-      alert(error.message || 'Failed to switch network');
-      console.error('Failed to switch network:', error);
-    }
+  const handleCopy = () => {
+    navigator.clipboard.writeText('npm install web3-react-hooks');
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000); 
   };
 
-  const handleSimulateTransaction = async () => {
-    if (!provider) {
-      alert('Connect your wallet first!');
-      return;
-    }
+  useEffect(() => {
+    const typingEffect = setInterval(() => {
+      if (charIndex < frameworks[index].length) {
+        setTypedText((prev) => prev + frameworks[index].charAt(charIndex));
+        setCharIndex((prev) => prev + 1);
+      } else {
+        setTimeout(() => {
+          setTypedText("");
+          setCharIndex(0);
+          setIndex((prev) => (prev + 1) % frameworks.length);
+        }, 1000);
+      }
+    }, 150);
 
-    const transaction = {
-      to: walletAddress,
-      value: ethers.utils.parseEther('0.001'),
-    };
+    return () => clearInterval(typingEffect);
+  }, [charIndex, frameworks, index]);
 
-    setPendingTransaction(transaction);
-
-    try {
-      const signer = provider.getSigner();
-      const tx = await signer.sendTransaction(transaction);
-      setTransactionHash(tx.hash);
-      setPendingTransaction(null);
-    } catch (error) {
-      console.error('Transaction error:', error);
-      alert('Transaction failed. Check the console for details.');
-      setPendingTransaction(null);
-    }
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Wallet MultiChain Demo</h1>
+    <div className="bg-gradient-to-r from-gray-900 to-black text-white font-poppins">
 
-        {!walletAddress ? (
-          <button
-            onClick={connectWallet}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
-          >
-            Connect Wallet
-          </button>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-gray-700">
-              <span className="font-semibold">Connected Address:</span> {walletAddress}
-            </p>
-            <p>Balance : {balance} ETH</p>
-
-            <p className="text-gray-700">
-              <span className="font-semibold">Network:</span> {networkNames[network] || `Chain ID ${network}`}
-            </p>
-
-            <div className="flex flex-col space-y-4">
-              <button
-                onClick={disconnectWallet}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
-              >
-                Disconnect Wallet
-              </button>
-
-              <select
-                value={selectedChain}
-                onChange={(e) => handleSwitchNetwork(parseInt(e.target.value))}
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg"
-              >
-                {availableChains.map((chainId) => (
-                  <option key={chainId} value={chainId}>
-                    {networkNames[chainId] || `Chain ID ${chainId}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {provider && pendingTransaction && (
-              <GasEstimatorPanel 
-                provider={provider} 
-                transaction={pendingTransaction} 
-              />
-            )}
-
-            <button
-              onClick={handleSimulateTransaction}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
-            >
-              Simulate Transaction
-            </button>
+      <motion.nav
+        className="backdrop-blur-md text-white fixed top-0 w-full z-50 shadow-lg transition-all duration-300"
+        id="navbar"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="container mx-auto py-4 flex justify-between items-center">
+          {/* Logo and Project Name on the Left */}
+          <div className="flex items-center space-x-3">
+            <img src={Image} alt="Logo" className="w-16 h-16 object-cover rounded-full" />
+            <h1 className="text-2xl font-bold">Web3Connect</h1>
           </div>
-        )}
 
-        {transactionHash && <TransactionMonitor txHash={transactionHash} />}
+          {/* Navigation Links in the Center */}
+          <div className="flex space-x-6 text-lg font-semibold justify-center flex-grow">
+            <Link
+              to="features"
+              smooth={true}
+              duration={500}
+              className="hover:text-[#00bfff] transition duration-300 cursor-pointer font-poppins"
+            >
+              Features
+            </Link>
+            <Link
+              to="demo"
+              smooth={true}
+              duration={500}
+              className="hover:text-[#1e90ff] transition duration-300 cursor-pointer"
+            >
+              Demonstration
+            </Link>
+            <Link
+              to="sample"
+              smooth={true}
+              duration={500}
+              className="hover:text-[#1e90ff] transition duration-300 cursor-pointer"
+            >
+              Code Samples
+            </Link>
+
+          <Link
+            to="https://github.com/Rushhaabhhh/Web3ReactHooks"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[#1e90ff] transition duration-300 cursor-pointer"
+            >
+             GitHub
+          </Link>
+          </div>
+
+
+
+          
+        </div>
+      </motion.nav>
+
+      {/* Hero Section with transparent background */}
+      <div className="py-40 bg-transparent" id="home">
+      <div className="container mx-auto px-6 flex justify-between items-center">
+        {/* Left side: Texts */}
+        <div className="flex-1">
+          <motion.h1
+            className="text-5xl font-bold mb-4"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+          >
+            Engineered from a Pain Point, Introducing to You
+          </motion.h1>
+          <motion.h2
+            className="text-6xl font-extrabold text-indigo-600 mb-6"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, type: "spring", stiffness: 100 }}
+          >
+            <motion.span
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="relative inline-block"
+            >
+              'Web3 React Hooks'
+              <span className="absolute -bottom-2 left-0 w-full h-1 bg-indigo-600 transition-all duration-500 transform scale-x-0 origin-left group-hover:scale-x-100"></span>
+            </motion.span>
+          </motion.h2>
+          <motion.h3
+            className="text-3xl font-semibold mb-6"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.5 }}
+          >
+
+            <span>A Simple Solution of Web3 Integration</span> <br/>
+            <span>for All React Frameworks</span>
+          </motion.h3>
+
+          {/* Typing Animation for Frameworks */}
+          <motion.div
+            className="text-6xl text-gray-300 mt-4 mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 1 }}
+          >
+            <span>{typedText}</span>
+            <span className="text-transparent">|</span>
+          </motion.div>
+
+          {/* Left-side paragraph beneath the title */}
+          <motion.p
+            className="text-lg text-gray-400 mt-6"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 1 }}
+          >
+            Web3 React Hooks offer a simple and efficient way to manage Web3 interactions in your React applications. With hooks tailored to streamline blockchain connectivity and Ethereum interactions, you can integrate decentralized technology into your apps effortlessly and without the hassle.
+          </motion.p>
+        </div>
+
+
+
+        {/* Right side: Code Snippet */}
+        <div className="flex-1 text-center">
+          <motion.div
+            className="bg-gray-800 text-white p-6 rounded-lg shadow-lg py-10 w-3/4 mx-auto"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            <span className="text-xl block mb-4">Install with npm : </span>
+            <div className="flex items-center justify-center space-x-4">
+              <code className="bg-gray-900 text-white p-4 rounded-lg text-lg">
+                npm install web3-react-hooks
+              </code>
+              <button
+                onClick={handleCopy}
+                className="flex items-center text-indigo-500 hover:text-indigo-700 p-2"
+              >
+                {isCopied ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <CopyCheck size={20} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Copy size={20} />
+                  </motion.div>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
       </div>
+    </div>
+
+
+            {/* Features Section */}
+            <section className="container mx-auto px-6 py-20" id="features">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold">Features</h2>
+              <p className="mt-4 text-lg">Unlock the full potential of blockchain with these tools</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+
+              {/* <!-- Gas Estimation --> */}
+              <div className="bg-gray-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300">
+                <h3 className="text-2xl font-bold">Gas Estimator</h3>
+                <p className="mt-4">Estimate gas fees to optimize transaction costs across networks.</p>
+              </div>
+
+              {/* <!-- Wallet Connection --> */}
+              <div className="bg-gray-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300">
+                <h3 className="text-2xl font-bold">Wallet Connection</h3>
+                <p className="mt-4">Seamlessly connect your wallet for transactions across blockchains.</p>
+              </div>
+
+              {/* <!-- Transaction Status --> */}
+              <div className="bg-gray-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300">
+                <h3 className="text-2xl font-bold">Transaction Status</h3>
+                <p className="mt-4">Track the status of your blockchain transactions in real time.</p>
+              </div>
+            </div>
+          </section>
+
+
+      {/* Demo Section */}
+
+      <div id='demo' className="container mx-auto px-6 py-20">
+      <DemoComponent />
+      </div>
+
+      {/* Code Section */}
+      <section className="container mx-auto px-6 py-20" id="sample">
+  <div className="text-center mb-16">
+    <h2 className="text-4xl font-bold">Code Samples</h2>
+    <p className="mt-4 text-lg">Track transactions, estimate gas, and manage your wallet seamlessly!</p>
+  </div>
+
+  <div className="space-y-12">
+    {/* Transaction Status Hook */}
+    <div className="bg-gray-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300">
+      <h3 className="text-2xl font-bold">Transaction Status</h3>
+      <p className="mt-4">Monitor your blockchain transaction status in real-time.</p>
+      <pre className="bg-gray-700 text-green-400 p-4 rounded-lg overflow-auto mt-4">
+        {`import { useTransactionStatus } from './Hooks/useTransactionStatus';`}
+        <br />
+        {`function TransactionStatusDemo() {`}
+        <br />
+        {`  const { status, txHash } = useTransactionStatus("sampleTxHash");`}
+        <br />
+        {`  return (`}
+        <br />
+        {`    <div>`}
+        <br />
+        {`      <p className="text-white">Transaction Status: {status}</p>`}
+        <br />
+        {`      <p className="text-white">Transaction Hash: {txHash}</p>`}
+        <br />
+        {`    </div>`}
+        <br />
+        {`  );`}
+        <br />
+        {`}`}
+      </pre>
+    </div>
+
+    {/* Gas Estimator Hook */}
+    <div className="bg-gray-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300">
+      <h3 className="text-2xl font-bold">Gas Estimator</h3>
+      <p className="mt-4">Estimate transaction costs to optimize your blockchain interactions.</p>
+      <pre className="bg-gray-700 text-green-400 p-4 rounded-lg overflow-auto mt-4">
+        {`import { useGasEstimator } from './Hooks/useGasEstimator';`}
+        <br />
+        {`function GasEstimatorDemo() {`}
+        <br />
+        {`  const { estimation, error, loading } = useGasEstimator("sampleTransactionData");`}
+        <br />
+        {`  return (`}
+        <br />
+        {`    <div>`}
+        <br />
+        {`      {loading && <p className="text-white">Loading...</p>}`}
+        <br />
+        {`      {error && <p className="text-red-400">Error: {error.message}</p>}`}
+        <br />
+        {`      {estimation && <p className="text-white">Estimated Gas: {estimation.gasLimit}</p>}`}
+        <br />
+        {`    </div>`}
+        <br />
+        {`  );`}
+        <br />
+        {`}`}
+      </pre>
+    </div>
+
+    {/* Wallet Hook */}
+    <div className="bg-gray-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300">
+      <h3 className="text-2xl font-bold">Wallet Management</h3>
+      <p className="mt-4">Connect, manage, and interact with your crypto wallet.</p>
+      <pre className="bg-gray-700 text-green-400 p-4 rounded-lg overflow-auto mt-4">
+        {`import { useWallet } from './Hooks/useWallet';`}
+        <br />
+        {`function WalletDemo() {`}
+        <br />
+        {`  const { walletAddress, connectWallet, disconnectWallet } = useWallet();`}
+        <br />
+        {`  return (`}
+        <br />
+        {`    <div>`}
+        <br />
+        {`      {!walletAddress ? (`}
+        <br />
+        {`        <button onClick={connectWallet} className="text-white">Connect Wallet</button>`}
+        <br />
+        {`      ) : (`}
+        <br />
+        {`        <div>`}
+        <br />
+        {`          <p className="text-white">Address: {walletAddress}</p>`}
+        <br />
+        {`          <button onClick={disconnectWallet} className="text-red-400">Disconnect</button>`}
+        <br />
+        {`        </div>`}
+        <br />
+        {`      )}`}
+        <br />
+        {`    </div>`}
+        <br />
+        {`  );`}
+        <br />
+        {`}`}
+      </pre>
+    </div>
+  </div>
+</section>
+
+
+
+
+      {/* Footer Section */}
+      <footer className="bg-gray-900 py-8">
+        <div className="container mx-auto text-center">
+          <p className="text-lg">&copy; 2024 Web3 React Hooks. All Rights Reserved.</p>
+          <div className='text-lg mt-2'>
+          <span> Made by </span> 
+          <span> 
+          <a
+              href="https://github.com/Rushhaabhhh/Web3ReactHooks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#1e90ff] transition duration-300"
+            >
+            Rushhaabhhh</a>
+          </span>
+          </div>
+          <div className="mt-4">
+            <a href="#privacy" className="text-green-500 hover:text-green-400">Privacy Policy</a> | 
+            <a href="#terms" className="text-green-500 hover:text-green-400"> Terms of Service</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

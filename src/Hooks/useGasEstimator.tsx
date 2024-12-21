@@ -182,15 +182,11 @@ export const useGasEstimator = ({
 
 
 
-// import React from 'react';
-// import { ethers } from 'ethers';
-// import { useGasEstimator } from './Hooks/useGasEstimator';
-
 
 // const App = () => {
-//   // Connect to a local Ethereum node (Ganache)
-//   const provider = new ethers.providers.JsonRpcProvider('https://sepolia.infura.io/v3/96a5eaee541f4b9ba92d115040b83a53');
-
+  // Connect to a local Ethereum node (Ganache)
+  // const provider = new ethers.providers.JsonRpcProvider('https://sepolia.infura.io/v3/96a5eaee541f4b9ba92d115040b83a53');
+// 
 //   const {
 //     loading,
 //     error,
@@ -224,15 +220,6 @@ export const useGasEstimator = ({
 //           <p>Low: {estimation.confidence.low.toString()}</p>
 //           <p>Medium: {estimation.confidence.medium.toString()}</p>
 //           <p>High: {estimation.confidence.high.toString()}</p>
-
-//           <h3>Gas Price Recommendations</h3>
-//           <p>Slow: {estimation.gasPriceRecommendations.slow}</p>
-//           <p>Standard: {estimation.gasPriceRecommendations.standard}</p>
-//           <p>Fast: {estimation.gasPriceRecommendations.fast}</p>
-
-//           <h3>Network Congestion</h3>
-//           <p>{estimation.networkCongestion}</p>
-
 //         </div>
 //       )}
 //     </div>
