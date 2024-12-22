@@ -83,14 +83,14 @@ function App() {
               Code Samples
             </Link>
 
-          <Link
-            to="https://github.com/Rushhaabhhh/Web3ReactHooks"
+          <a
+            href="https://github.com/Rushhaabhhh/Web3ReactHooks"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[#1e90ff] transition duration-300 cursor-pointer"
             >
              GitHub
-          </Link>
+          </a>
           </div>
 
 
