@@ -9,6 +9,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "ethers": "^6.13.2"
+    "@ethersproject/providers": "^5.7.2",
+    "@types/react": "^19.0.2",
+    "ethers": "^6.13.2",
+    "lodash": "^4.17.21",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.13"
   }
 }
